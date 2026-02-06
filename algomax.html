@@ -1,0 +1,2120 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algorithm Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    
+    * {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .algorithm-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .algorithm-card:hover {
+      transform: translateY(-4px);
+    }
+    
+    .array-bar {
+      transition: all 0.3s ease;
+    }
+    
+    .array-bar.comparing {
+      background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    }
+    
+    .array-bar.swapping {
+      background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    }
+    
+    .array-bar.sorted {
+      background: linear-gradient(135deg, #10b981, #059669) !important;
+    }
+    
+    .array-bar.pivot {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+    }
+    
+    .graph-node {
+      transition: all 0.3s ease;
+    }
+    
+    .graph-node.visited {
+      fill: #10b981 !important;
+    }
+    
+    .graph-node.current {
+      fill: #f59e0b !important;
+      filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+    }
+    
+    .graph-node.queued {
+      fill: #8b5cf6 !important;
+    }
+    
+    .graph-edge {
+      transition: all 0.3s ease;
+    }
+    
+    .graph-edge.visited {
+      stroke: #10b981 !important;
+      stroke-width: 3 !important;
+    }
+    
+    .graph-edge.current {
+      stroke: #f59e0b !important;
+      stroke-width: 4 !important;
+    }
+    
+    .pseudocode-line.active {
+      background: rgba(99, 102, 241, 0.2);
+      border-left: 3px solid #6366f1;
+    }
+    
+    .control-btn {
+      transition: all 0.2s ease;
+    }
+    
+    .control-btn:hover:not(:disabled) {
+      transform: scale(1.05);
+    }
+    
+    .control-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+    
+    .speed-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+    }
+    
+    .speed-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+    
+    .tab-btn.active {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+      50% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+    }
+    
+    .pulse-animation {
+      animation: pulse-glow 2s infinite;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+    
+    .category-badge {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .search-box:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    }
+    
+    .tooltip {
+      position: relative;
+    }
+    
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 8px;
+      background: #1f2937;
+      color: white;
+      font-size: 0.75rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    
+    .tooltip:hover::after {
+      opacity: 1;
+    }
+    
+    .theme-toggle {
+      position: relative;
+      width: 56px;
+      height: 28px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .theme-toggle-knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: white;
+      transition: transform 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .dark .theme-toggle-knob {
+      transform: translateX(28px);
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full overflow-auto bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50">
+  <div id="app" class="min-h-full w-full"><!-- Header -->
+   <header class="sticky top-0 z-50 backdrop-blur-lg bg-white/80 border-b border-slate-200/50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+     <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="app-title" class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Algorithm Visualizer</h1>
+       <p id="welcome-msg" class="text-xs text-slate-500">Learn algorithms through interactive visualization</p>
+      </div>
+     </div>
+     <div class="flex items-center gap-4">
+      <div id="theme-toggle" class="theme-toggle bg-slate-200" onclick="toggleTheme()">
+       <div class="theme-toggle-knob"><span id="theme-icon">☀️</span>
+       </div>
+      </div>
+      <div class="hidden md:flex items-center gap-2 text-sm"><span class="px-3 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium text-xs"> 📚 12 Algorithms </span>
+      </div>
+     </div>
+    </div>
+   </header><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-4 py-6"><!-- Category Tabs -->
+    <div class="flex flex-wrap gap-2 mb-6"><button class="tab-btn active px-4 py-2 rounded-lg font-medium text-sm transition-all" onclick="filterCategory('all')"> 🎯 All </button> <button class="tab-btn px-4 py-2 rounded-lg font-medium text-sm bg-white text-slate-600 hover:bg-slate-100 transition-all" onclick="filterCategory('sorting')"> 📊 Sorting </button> <button class="tab-btn px-4 py-2 rounded-lg font-medium text-sm bg-white text-slate-600 hover:bg-slate-100 transition-all" onclick="filterCategory('searching')"> 🔍 Searching </button> <button class="tab-btn px-4 py-2 rounded-lg font-medium text-sm bg-white text-slate-600 hover:bg-slate-100 transition-all" onclick="filterCategory('graph')"> 🔗 Graph </button> <button class="tab-btn px-4 py-2 rounded-lg font-medium text-sm bg-white text-slate-600 hover:bg-slate-100 transition-all" onclick="filterCategory('dp')"> 🧩 Dynamic Programming </button>
+    </div><!-- Algorithm Selection Grid -->
+    <div id="algorithm-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8"><!-- Cards will be inserted here -->
+    </div><!-- Visualization Area (Hidden by default) -->
+    <div id="visualization-area" class="hidden"><!-- Back Button --> <button onclick="goBack()" class="mb-4 flex items-center gap-2 text-slate-600 hover:text-indigo-600 transition-colors font-medium">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg> Back to Algorithms </button>
+     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><!-- Main Visualization -->
+      <div class="lg:col-span-2 space-y-4"><!-- Algorithm Info Header -->
+       <div id="algo-header" class="bg-white rounded-2xl p-5 shadow-lg border border-slate-100">
+        <div class="flex items-start justify-between mb-3">
+         <div>
+          <h2 id="algo-name" class="text-2xl font-bold text-slate-800">Algorithm Name</h2>
+          <p id="algo-category-badge" class="category-badge bg-indigo-100 text-indigo-700 inline-block mt-1">Category</p>
+         </div>
+         <div class="flex items-center gap-2"><span id="algo-complexity" class="text-sm font-mono bg-slate-100 px-3 py-1 rounded-lg text-slate-600">O(n²)</span>
+         </div>
+        </div>
+        <p id="algo-description" class="text-slate-600 text-sm leading-relaxed">Description of the algorithm...</p>
+       </div><!-- Visualization Canvas -->
+       <div id="viz-container" class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 min-h-[300px]">
+        <div id="array-viz" class="hidden flex items-end justify-center gap-1 h-64"><!-- Array bars will be inserted here -->
+        </div>
+        <div id="graph-viz" class="hidden h-80">
+         <svg id="graph-svg" class="w-full h-full"></svg>
+        </div>
+        <div id="search-viz" class="hidden">
+         <div id="search-array" class="flex flex-wrap gap-2 justify-center mb-4"><!-- Search array will be inserted here -->
+         </div>
+         <div id="search-info" class="text-center text-slate-600 font-medium"></div>
+        </div>
+        <div id="dp-viz" class="hidden overflow-x-auto">
+         <div id="dp-table" class="inline-block"><!-- DP table will be inserted here -->
+         </div>
+        </div>
+       </div><!-- Controls -->
+       <div class="bg-white rounded-2xl p-5 shadow-lg border border-slate-100">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+         <div class="flex items-center gap-2"><button id="btn-reset" onclick="resetVisualization()" class="control-btn p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" data-tooltip="Reset">
+           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+           </svg></button> <button id="btn-step-back" onclick="stepBack()" class="control-btn p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" data-tooltip="Step Back">
+           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+           </svg></button> <button id="btn-play" onclick="togglePlay()" class="control-btn p-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl pulse-animation">
+           <svg id="play-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+           </svg>
+           <svg id="pause-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+           </svg></button> <button id="btn-step-forward" onclick="stepForward()" class="control-btn p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" data-tooltip="Step Forward">
+           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" />
+           </svg></button>
+         </div>
+         <div class="flex items-center gap-3"><span class="text-sm text-slate-500">Speed:</span> <input type="range" id="speed-slider" min="1" max="10" value="5" class="speed-slider w-32" onchange="updateSpeed(this.value)"> <span id="speed-label" class="text-sm font-mono text-slate-600 w-12">1.0x</span>
+         </div>
+        </div><!-- Step Counter -->
+        <div class="mt-4 flex items-center justify-between text-sm"><span class="text-slate-500">Step: <span id="step-counter" class="font-mono font-bold text-indigo-600">0</span> / <span id="total-steps" class="font-mono">0</span></span> <span id="status-text" class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">Ready</span>
+        </div>
+       </div><!-- Input Configuration -->
+       <div class="bg-white rounded-2xl p-5 shadow-lg border border-slate-100">
+        <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+         <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+         </svg> Custom Input</h3>
+        <div id="input-config" class="space-y-3"><!-- Dynamic input fields -->
+        </div><button onclick="applyCustomInput()" class="mt-4 w-full py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium hover:shadow-lg transition-all"> Apply &amp; Visualize </button>
+       </div>
+      </div><!-- Sidebar - Explanation & Pseudocode -->
+      <div class="space-y-4"><!-- Real-time Explanation -->
+       <div class="bg-white rounded-2xl p-5 shadow-lg border border-slate-100">
+        <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+         <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+         </svg> Current Step Explanation</h3>
+        <div id="step-explanation" class="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200">
+         <p class="text-slate-700 text-sm leading-relaxed">Click Play or Step Forward to begin the visualization.</p>
+        </div>
+       </div><!-- Pseudocode -->
+       <div class="bg-white rounded-2xl p-5 shadow-lg border border-slate-100">
+        <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+         </svg> Pseudocode</h3>
+        <div id="pseudocode" class="font-mono text-sm space-y-1 max-h-80 overflow-y-auto"><!-- Pseudocode lines -->
+        </div>
+       </div><!-- Algorithm Stats -->
+       <div class="bg-white rounded-2xl p-5 shadow-lg border border-slate-100">
+        <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+         <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+         </svg> Statistics</h3>
+        <div class="grid grid-cols-2 gap-3">
+         <div class="p-3 rounded-xl bg-indigo-50 text-center">
+          <div class="text-2xl font-bold text-indigo-600" id="stat-comparisons">
+           0
+          </div>
+          <div class="text-xs text-slate-500">
+           Comparisons
+          </div>
+         </div>
+         <div class="p-3 rounded-xl bg-purple-50 text-center">
+          <div class="text-2xl font-bold text-purple-600" id="stat-swaps">
+           0
+          </div>
+          <div class="text-xs text-slate-500">
+           Swaps
+          </div>
+         </div>
+         <div class="p-3 rounded-xl bg-emerald-50 text-center">
+          <div class="text-2xl font-bold text-emerald-600" id="stat-time">
+           0ms
+          </div>
+          <div class="text-xs text-slate-500">
+           Time
+          </div>
+         </div>
+         <div class="p-3 rounded-xl bg-amber-50 text-center">
+          <div class="text-2xl font-bold text-amber-600" id="stat-space">
+           O(1)
+          </div>
+          <div class="text-xs text-slate-500">
+           Space
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Footer -->
+   <footer class="mt-auto py-6 text-center text-slate-500 text-sm border-t border-slate-200 bg-white/50">
+    <p>Built with ❤️ for learning algorithms • <span class="font-medium">12</span> algorithms and counting!</p>
+   </footer>
+  </div>
+  <script>
+    // ==================== CONFIGURATION ====================
+    const defaultConfig = {
+      app_title: 'Algorithm Visualizer',
+      welcome_message: 'Learn algorithms through interactive visualization',
+      background_color: '#f8fafc',
+      surface_color: '#ffffff',
+      text_color: '#1e293b',
+      primary_action_color: '#6366f1',
+      secondary_action_color: '#8b5cf6'
+    };
+
+    let isDarkTheme = false;
+    
+    // ==================== ALGORITHMS DATA ====================
+    const algorithms = {
+      // Sorting Algorithms
+      bubbleSort: {
+        name: 'Bubble Sort',
+        category: 'sorting',
+        complexity: { time: 'O(n²)', space: 'O(1)' },
+        description: 'Repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until the list is sorted.',
+        pseudocode: [
+          'for i = 0 to n-1:',
+          '    for j = 0 to n-i-1:',
+          '        if arr[j] > arr[j+1]:',
+          '            swap(arr[j], arr[j+1])',
+          'return arr'
+        ],
+        icon: '🫧'
+      },
+      selectionSort: {
+        name: 'Selection Sort',
+        category: 'sorting',
+        complexity: { time: 'O(n²)', space: 'O(1)' },
+        description: 'Divides the input list into a sorted and unsorted region, and iteratively selects the smallest element from the unsorted region to move to the sorted region.',
+        pseudocode: [
+          'for i = 0 to n-1:',
+          '    minIdx = i',
+          '    for j = i+1 to n:',
+          '        if arr[j] < arr[minIdx]:',
+          '            minIdx = j',
+          '    swap(arr[i], arr[minIdx])',
+          'return arr'
+        ],
+        icon: '👆'
+      },
+      insertionSort: {
+        name: 'Insertion Sort',
+        category: 'sorting',
+        complexity: { time: 'O(n²)', space: 'O(1)' },
+        description: 'Builds the final sorted array one item at a time. It picks the next item and places it in its correct position among the previously sorted items.',
+        pseudocode: [
+          'for i = 1 to n:',
+          '    key = arr[i]',
+          '    j = i - 1',
+          '    while j >= 0 and arr[j] > key:',
+          '        arr[j+1] = arr[j]',
+          '        j = j - 1',
+          '    arr[j+1] = key',
+          'return arr'
+        ],
+        icon: '📥'
+      },
+      quickSort: {
+        name: 'Quick Sort',
+        category: 'sorting',
+        complexity: { time: 'O(n log n)', space: 'O(log n)' },
+        description: 'A divide-and-conquer algorithm that selects a pivot element and partitions the array around it, recursively sorting the sub-arrays.',
+        pseudocode: [
+          'quickSort(arr, low, high):',
+          '    if low < high:',
+          '        pivot = partition(arr, low, high)',
+          '        quickSort(arr, low, pivot-1)',
+          '        quickSort(arr, pivot+1, high)',
+          '',
+          'partition(arr, low, high):',
+          '    pivot = arr[high]',
+          '    i = low - 1',
+          '    for j = low to high-1:',
+          '        if arr[j] <= pivot:',
+          '            i++; swap(arr[i], arr[j])',
+          '    swap(arr[i+1], arr[high])',
+          '    return i + 1'
+        ],
+        icon: '⚡'
+      },
+      mergeSort: {
+        name: 'Merge Sort',
+        category: 'sorting',
+        complexity: { time: 'O(n log n)', space: 'O(n)' },
+        description: 'Divides the array into halves, recursively sorts them, and then merges the sorted halves. A stable, efficient sorting algorithm.',
+        pseudocode: [
+          'mergeSort(arr):',
+          '    if len(arr) <= 1: return arr',
+          '    mid = len(arr) / 2',
+          '    left = mergeSort(arr[0:mid])',
+          '    right = mergeSort(arr[mid:])',
+          '    return merge(left, right)',
+          '',
+          'merge(left, right):',
+          '    result = []',
+          '    while left and right not empty:',
+          '        if left[0] <= right[0]:',
+          '            result.append(left.pop(0))',
+          '        else:',
+          '            result.append(right.pop(0))',
+          '    return result + left + right'
+        ],
+        icon: '🔀'
+      },
+      // Searching Algorithms
+      linearSearch: {
+        name: 'Linear Search',
+        category: 'searching',
+        complexity: { time: 'O(n)', space: 'O(1)' },
+        description: 'Sequentially checks each element of the list until a match is found or the whole list has been searched. Simple but not efficient for large lists.',
+        pseudocode: [
+          'linearSearch(arr, target):',
+          '    for i = 0 to n-1:',
+          '        if arr[i] == target:',
+          '            return i',
+          '    return -1 (not found)'
+        ],
+        icon: '🔎'
+      },
+      binarySearch: {
+        name: 'Binary Search',
+        category: 'searching',
+        complexity: { time: 'O(log n)', space: 'O(1)' },
+        description: 'Efficiently searches a sorted array by repeatedly dividing the search interval in half. Compares the target with the middle element.',
+        pseudocode: [
+          'binarySearch(arr, target):',
+          '    low = 0, high = n - 1',
+          '    while low <= high:',
+          '        mid = (low + high) / 2',
+          '        if arr[mid] == target:',
+          '            return mid',
+          '        else if arr[mid] < target:',
+          '            low = mid + 1',
+          '        else:',
+          '            high = mid - 1',
+          '    return -1 (not found)'
+        ],
+        icon: '🎯'
+      },
+      // Graph Algorithms
+      bfs: {
+        name: 'Breadth-First Search',
+        category: 'graph',
+        complexity: { time: 'O(V + E)', space: 'O(V)' },
+        description: 'Explores all vertices at the present depth level before moving to vertices at the next depth level. Uses a queue data structure.',
+        pseudocode: [
+          'BFS(graph, start):',
+          '    queue = [start]',
+          '    visited = {start}',
+          '    while queue not empty:',
+          '        node = queue.dequeue()',
+          '        process(node)',
+          '        for neighbor in graph[node]:',
+          '            if neighbor not in visited:',
+          '                visited.add(neighbor)',
+          '                queue.enqueue(neighbor)'
+        ],
+        icon: '🌊'
+      },
+      dfs: {
+        name: 'Depth-First Search',
+        category: 'graph',
+        complexity: { time: 'O(V + E)', space: 'O(V)' },
+        description: 'Explores as far as possible along each branch before backtracking. Can be implemented recursively or with a stack.',
+        pseudocode: [
+          'DFS(graph, node, visited):',
+          '    if node in visited: return',
+          '    visited.add(node)',
+          '    process(node)',
+          '    for neighbor in graph[node]:',
+          '        DFS(graph, neighbor, visited)'
+        ],
+        icon: '🏔️'
+      },
+      dijkstra: {
+        name: "Dijkstra's Algorithm",
+        category: 'graph',
+        complexity: { time: 'O((V + E) log V)', space: 'O(V)' },
+        description: 'Finds the shortest path from a source vertex to all other vertices in a weighted graph with non-negative edge weights.',
+        pseudocode: [
+          'dijkstra(graph, source):',
+          '    dist[v] = ∞ for all v',
+          '    dist[source] = 0',
+          '    pq = priority_queue()',
+          '    pq.add((0, source))',
+          '    while pq not empty:',
+          '        d, u = pq.pop_min()',
+          '        for (v, weight) in graph[u]:',
+          '            if dist[u] + weight < dist[v]:',
+          '                dist[v] = dist[u] + weight',
+          '                pq.add((dist[v], v))'
+        ],
+        icon: '🛤️'
+      },
+      // Dynamic Programming
+      fibonacci: {
+        name: 'Fibonacci (DP)',
+        category: 'dp',
+        complexity: { time: 'O(n)', space: 'O(n)' },
+        description: 'Computes the nth Fibonacci number using dynamic programming with memoization, avoiding exponential time complexity of naive recursion.',
+        pseudocode: [
+          'fibonacci(n):',
+          '    dp[0] = 0, dp[1] = 1',
+          '    for i = 2 to n:',
+          '        dp[i] = dp[i-1] + dp[i-2]',
+          '    return dp[n]'
+        ],
+        icon: '🐚'
+      },
+      knapsack: {
+        name: '0/1 Knapsack',
+        category: 'dp',
+        complexity: { time: 'O(nW)', space: 'O(nW)' },
+        description: 'Solves the problem of selecting items with given weights and values to maximize value while staying within a weight capacity.',
+        pseudocode: [
+          'knapsack(weights, values, W):',
+          '    dp[i][w] = 0 for all i, w',
+          '    for i = 1 to n:',
+          '        for w = 1 to W:',
+          '            if weights[i-1] <= w:',
+          '                dp[i][w] = max(',
+          '                    dp[i-1][w],',
+          '                    values[i-1] + dp[i-1][w-weights[i-1]]',
+          '                )',
+          '            else:',
+          '                dp[i][w] = dp[i-1][w]',
+          '    return dp[n][W]'
+        ],
+        icon: '🎒'
+      }
+    };
+
+    // ==================== STATE MANAGEMENT ====================
+    let state = {
+      currentAlgorithm: null,
+      isPlaying: false,
+      currentStep: 0,
+      totalSteps: 0,
+      speed: 5,
+      steps: [],
+      array: [],
+      graph: null,
+      searchTarget: null,
+      stats: { comparisons: 0, swaps: 0, startTime: 0 },
+      animationTimeout: null
+    };
+
+    // ==================== INITIALIZATION ====================
+    function init() {
+      renderAlgorithmGrid();
+    }
+
+    function renderAlgorithmGrid() {
+      const grid = document.getElementById('algorithm-grid');
+      grid.innerHTML = '';
+      
+      const categoryColors = {
+        sorting: { bg: 'from-blue-500 to-cyan-500', badge: 'bg-blue-100 text-blue-700' },
+        searching: { bg: 'from-emerald-500 to-teal-500', badge: 'bg-emerald-100 text-emerald-700' },
+        graph: { bg: 'from-purple-500 to-pink-500', badge: 'bg-purple-100 text-purple-700' },
+        dp: { bg: 'from-amber-500 to-orange-500', badge: 'bg-amber-100 text-amber-700' }
+      };
+
+      Object.entries(algorithms).forEach(([key, algo]) => {
+        const colors = categoryColors[algo.category];
+        const card = document.createElement('div');
+        card.className = `algorithm-card fade-in bg-white rounded-2xl p-5 shadow-lg border border-slate-100 cursor-pointer hover:shadow-xl`;
+        card.dataset.category = algo.category;
+        card.onclick = () => selectAlgorithm(key);
+        
+        card.innerHTML = `
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${colors.bg} flex items-center justify-center text-2xl shadow-lg">
+              ${algo.icon}
+            </div>
+            <span class="category-badge ${colors.badge}">${algo.category}</span>
+          </div>
+          <h3 class="font-bold text-slate-800 text-lg mb-2">${algo.name}</h3>
+          <p class="text-slate-500 text-sm leading-relaxed line-clamp-2">${algo.description.substring(0, 80)}...</p>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-600">${algo.complexity.time}</span>
+            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
+
+    function filterCategory(category) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (!btn.classList.contains('active')) {
+          btn.classList.add('bg-white', 'text-slate-600');
+        }
+      });
+      event.target.classList.add('active');
+      event.target.classList.remove('bg-white', 'text-slate-600');
+
+      document.querySelectorAll('.algorithm-card').forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // ==================== ALGORITHM SELECTION ====================
+    function selectAlgorithm(algoKey) {
+      state.currentAlgorithm = algoKey;
+      const algo = algorithms[algoKey];
+      
+      document.getElementById('algorithm-grid').parentElement.querySelector('.flex.flex-wrap').classList.add('hidden');
+      document.getElementById('algorithm-grid').classList.add('hidden');
+      document.getElementById('visualization-area').classList.remove('hidden');
+      
+      document.getElementById('algo-name').textContent = algo.name;
+      document.getElementById('algo-description').textContent = algo.description;
+      document.getElementById('algo-complexity').textContent = algo.complexity.time;
+      
+      const categoryColors = {
+        sorting: 'bg-blue-100 text-blue-700',
+        searching: 'bg-emerald-100 text-emerald-700',
+        graph: 'bg-purple-100 text-purple-700',
+        dp: 'bg-amber-100 text-amber-700'
+      };
+      const badge = document.getElementById('algo-category-badge');
+      badge.className = `category-badge ${categoryColors[algo.category]} inline-block mt-1`;
+      badge.textContent = algo.category.toUpperCase();
+      
+      renderPseudocode(algo.pseudocode);
+      setupInputConfig(algo.category);
+      document.getElementById('stat-space').textContent = algo.complexity.space;
+      
+      resetVisualization();
+    }
+
+    function goBack() {
+      stopAnimation();
+      document.getElementById('algorithm-grid').parentElement.querySelector('.flex.flex-wrap').classList.remove('hidden');
+      document.getElementById('algorithm-grid').classList.remove('hidden');
+      document.getElementById('visualization-area').classList.add('hidden');
+      state.currentAlgorithm = null;
+    }
+
+    function renderPseudocode(lines) {
+      const container = document.getElementById('pseudocode');
+      container.innerHTML = lines.map((line, i) => `
+        <div class="pseudocode-line px-3 py-1 rounded text-slate-600 hover:bg-slate-50" data-line="${i}">
+          <span class="text-slate-400 mr-2">${i + 1}</span>${escapeHtml(line)}
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function setupInputConfig(category) {
+      const container = document.getElementById('input-config');
+      
+      if (category === 'sorting') {
+        container.innerHTML = `
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">Array Values (comma-separated)</label>
+            <input type="text" id="input-array" value="64, 34, 25, 12, 22, 11, 90, 45" 
+              class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">Or generate random array</label>
+            <div class="flex gap-2">
+              <input type="number" id="input-size" value="10" min="5" max="30" placeholder="Size"
+                class="flex-1 px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+              <button onclick="generateRandomArray()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium text-sm">
+                Generate
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (category === 'searching') {
+        container.innerHTML = `
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">Array Values (comma-separated, sorted for binary search)</label>
+            <input type="text" id="input-array" value="11, 12, 22, 25, 34, 45, 64, 78, 90" 
+              class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">Target Value</label>
+            <input type="number" id="input-target" value="45" 
+              class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+          </div>
+        `;
+      } else if (category === 'graph') {
+        container.innerHTML = `
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">Number of Nodes</label>
+            <input type="number" id="input-nodes" value="7" min="4" max="12" 
+              class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">Starting Node</label>
+            <input type="number" id="input-start" value="0" min="0" 
+              class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+          </div>
+        `;
+      } else if (category === 'dp') {
+        if (state.currentAlgorithm === 'fibonacci') {
+          container.innerHTML = `
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Calculate Fibonacci of n</label>
+              <input type="number" id="input-n" value="10" min="2" max="20" 
+                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Item Weights (comma-separated)</label>
+              <input type="text" id="input-weights" value="2, 3, 4, 5" 
+                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Item Values (comma-separated)</label>
+              <input type="text" id="input-values" value="3, 4, 5, 6" 
+                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Knapsack Capacity</label>
+              <input type="number" id="input-capacity" value="8" min="1" max="20" 
+                class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm">
+            </div>
+          `;
+        }
+      }
+    }
+
+    function generateRandomArray() {
+      const size = parseInt(document.getElementById('input-size').value) || 10;
+      const arr = Array.from({ length: Math.min(size, 30) }, () => Math.floor(Math.random() * 100) + 1);
+      document.getElementById('input-array').value = arr.join(', ');
+    }
+
+    // ==================== VISUALIZATION CONTROL ====================
+    function applyCustomInput() {
+      resetVisualization();
+      const algo = algorithms[state.currentAlgorithm];
+      
+      if (algo.category === 'sorting') {
+        const input = document.getElementById('input-array').value;
+        state.array = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+        generateSortingSteps();
+        renderArrayVisualization();
+      } else if (algo.category === 'searching') {
+        const input = document.getElementById('input-array').value;
+        state.array = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+        state.searchTarget = parseInt(document.getElementById('input-target').value);
+        if (state.currentAlgorithm === 'binarySearch') {
+          state.array.sort((a, b) => a - b);
+        }
+        generateSearchSteps();
+        renderSearchVisualization();
+      } else if (algo.category === 'graph') {
+        const nodeCount = parseInt(document.getElementById('input-nodes').value) || 7;
+        state.graph = generateRandomGraph(nodeCount);
+        const startNode = parseInt(document.getElementById('input-start').value) || 0;
+        generateGraphSteps(startNode);
+        renderGraphVisualization();
+      } else if (algo.category === 'dp') {
+        if (state.currentAlgorithm === 'fibonacci') {
+          const n = parseInt(document.getElementById('input-n').value) || 10;
+          generateFibonacciSteps(n);
+          renderDPVisualization();
+        } else {
+          const weights = document.getElementById('input-weights').value.split(',').map(x => parseInt(x.trim()));
+          const values = document.getElementById('input-values').value.split(',').map(x => parseInt(x.trim()));
+          const capacity = parseInt(document.getElementById('input-capacity').value) || 8;
+          generateKnapsackSteps(weights, values, capacity);
+          renderDPVisualization();
+        }
+      }
+      
+      document.getElementById('total-steps').textContent = state.totalSteps;
+    }
+
+    function resetVisualization() {
+      stopAnimation();
+      state.currentStep = 0;
+      state.steps = [];
+      state.totalSteps = 0;
+      state.stats = { comparisons: 0, swaps: 0, startTime: 0 };
+      
+      updateStepDisplay();
+      updateStatusText('Ready');
+      updateExplanation('Click Play or Step Forward to begin the visualization.');
+      highlightPseudocodeLine(-1);
+      
+      document.getElementById('stat-comparisons').textContent = '0';
+      document.getElementById('stat-swaps').textContent = '0';
+      document.getElementById('stat-time').textContent = '0ms';
+      
+      const algo = algorithms[state.currentAlgorithm];
+      if (algo) {
+        if (algo.category === 'sorting') {
+          state.array = [64, 34, 25, 12, 22, 11, 90, 45];
+          generateSortingSteps();
+          renderArrayVisualization();
+        } else if (algo.category === 'searching') {
+          state.array = state.currentAlgorithm === 'binarySearch' 
+            ? [11, 12, 22, 25, 34, 45, 64, 78, 90]
+            : [64, 34, 25, 12, 22, 11, 90, 45];
+          state.searchTarget = 45;
+          generateSearchSteps();
+          renderSearchVisualization();
+        } else if (algo.category === 'graph') {
+          state.graph = generateRandomGraph(7);
+          generateGraphSteps(0);
+          renderGraphVisualization();
+        } else if (algo.category === 'dp') {
+          if (state.currentAlgorithm === 'fibonacci') {
+            generateFibonacciSteps(10);
+          } else {
+            generateKnapsackSteps([2, 3, 4, 5], [3, 4, 5, 6], 8);
+          }
+          renderDPVisualization();
+        }
+        document.getElementById('total-steps').textContent = state.totalSteps;
+      }
+    }
+
+    function togglePlay() {
+      if (state.isPlaying) {
+        pauseAnimation();
+      } else {
+        if (state.currentStep === 0) {
+          state.stats.startTime = Date.now();
+        }
+        playAnimation();
+      }
+    }
+
+    function playAnimation() {
+      state.isPlaying = true;
+      document.getElementById('play-icon').classList.add('hidden');
+      document.getElementById('pause-icon').classList.remove('hidden');
+      document.getElementById('btn-play').classList.remove('pulse-animation');
+      updateStatusText('Running');
+      
+      runNextStep();
+    }
+
+    function pauseAnimation() {
+      state.isPlaying = false;
+      document.getElementById('play-icon').classList.remove('hidden');
+      document.getElementById('pause-icon').classList.add('hidden');
+      document.getElementById('btn-play').classList.add('pulse-animation');
+      updateStatusText('Paused');
+      
+      if (state.animationTimeout) {
+        clearTimeout(state.animationTimeout);
+      }
+    }
+
+    function stopAnimation() {
+      pauseAnimation();
+      state.currentStep = 0;
+      updateStepDisplay();
+    }
+
+    function runNextStep() {
+      if (!state.isPlaying || state.currentStep >= state.totalSteps) {
+        if (state.currentStep >= state.totalSteps) {
+          pauseAnimation();
+          updateStatusText('Complete ✓');
+          const elapsed = Date.now() - state.stats.startTime;
+          document.getElementById('stat-time').textContent = `${elapsed}ms`;
+        }
+        return;
+      }
+      
+      executeStep(state.currentStep);
+      state.currentStep++;
+      updateStepDisplay();
+      
+      const delay = getAnimationDelay();
+      state.animationTimeout = setTimeout(runNextStep, delay);
+    }
+
+    function stepForward() {
+      if (state.currentStep < state.totalSteps) {
+        if (state.currentStep === 0) {
+          state.stats.startTime = Date.now();
+        }
+        executeStep(state.currentStep);
+        state.currentStep++;
+        updateStepDisplay();
+        updateStatusText('Stepped');
+      }
+    }
+
+    function stepBack() {
+      if (state.currentStep > 0) {
+        state.currentStep--;
+        rebuildToStep(state.currentStep);
+        updateStepDisplay();
+        updateStatusText('Stepped Back');
+      }
+    }
+
+    function rebuildToStep(targetStep) {
+      const algo = algorithms[state.currentAlgorithm];
+      state.stats.comparisons = 0;
+      state.stats.swaps = 0;
+      
+      if (algo.category === 'sorting') {
+        state.array = state.steps[0].array.slice();
+        for (let i = 0; i < targetStep; i++) {
+          const step = state.steps[i];
+          if (step.swap) {
+            const [a, b] = step.swap;
+            [state.array[a], state.array[b]] = [state.array[b], state.array[a]];
+            state.stats.swaps++;
+          }
+          if (step.comparing) state.stats.comparisons++;
+        }
+        renderArrayVisualization();
+        if (targetStep > 0) {
+          const step = state.steps[targetStep - 1];
+          applyStepState(step);
+        }
+      } else if (algo.category === 'searching') {
+        renderSearchVisualization();
+        if (targetStep > 0) {
+          const step = state.steps[targetStep - 1];
+          applySearchStepState(step);
+        }
+      } else if (algo.category === 'graph') {
+        renderGraphVisualization();
+        for (let i = 0; i < targetStep; i++) {
+          applyGraphStepState(state.steps[i]);
+        }
+      } else if (algo.category === 'dp') {
+        renderDPVisualization();
+        for (let i = 0; i < targetStep; i++) {
+          applyDPStepState(state.steps[i]);
+        }
+      }
+      
+      if (targetStep > 0) {
+        const step = state.steps[targetStep - 1];
+        updateExplanation(step.explanation);
+        highlightPseudocodeLine(step.line);
+      } else {
+        updateExplanation('Click Play or Step Forward to begin the visualization.');
+        highlightPseudocodeLine(-1);
+      }
+      
+      document.getElementById('stat-comparisons').textContent = state.stats.comparisons;
+      document.getElementById('stat-swaps').textContent = state.stats.swaps;
+    }
+
+    function executeStep(stepIndex) {
+      const step = state.steps[stepIndex];
+      if (!step) return;
+      
+      const algo = algorithms[state.currentAlgorithm];
+      
+      if (algo.category === 'sorting') {
+        applyStepState(step);
+        if (step.swap) {
+          const [a, b] = step.swap;
+          [state.array[a], state.array[b]] = [state.array[b], state.array[a]];
+          state.stats.swaps++;
+        }
+        if (step.comparing) state.stats.comparisons++;
+        renderArrayVisualization();
+        applyStepState(step);
+      } else if (algo.category === 'searching') {
+        applySearchStepState(step);
+        if (step.comparing) state.stats.comparisons++;
+      } else if (algo.category === 'graph') {
+        applyGraphStepState(step);
+      } else if (algo.category === 'dp') {
+        applyDPStepState(step);
+      }
+      
+      updateExplanation(step.explanation);
+      highlightPseudocodeLine(step.line);
+      document.getElementById('stat-comparisons').textContent = state.stats.comparisons;
+      document.getElementById('stat-swaps').textContent = state.stats.swaps;
+    }
+
+    function applyStepState(step) {
+      const bars = document.querySelectorAll('.array-bar');
+      bars.forEach((bar, i) => {
+        bar.classList.remove('comparing', 'swapping', 'sorted', 'pivot');
+        if (step.comparing && step.comparing.includes(i)) {
+          bar.classList.add('comparing');
+        }
+        if (step.swap && step.swap.includes(i)) {
+          bar.classList.add('swapping');
+        }
+        if (step.sorted && step.sorted.includes(i)) {
+          bar.classList.add('sorted');
+        }
+        if (step.pivot === i) {
+          bar.classList.add('pivot');
+        }
+      });
+    }
+
+    function applySearchStepState(step) {
+      const items = document.querySelectorAll('.search-item');
+      items.forEach((item, i) => {
+        item.classList.remove('bg-amber-400', 'bg-emerald-400', 'bg-red-400', 'bg-slate-300');
+        item.classList.add('bg-indigo-100');
+        
+        if (step.current === i) {
+          item.classList.remove('bg-indigo-100');
+          item.classList.add('bg-amber-400');
+        }
+        if (step.found === i) {
+          item.classList.remove('bg-indigo-100', 'bg-amber-400');
+          item.classList.add('bg-emerald-400');
+        }
+        if (step.eliminated && step.eliminated.includes(i)) {
+          item.classList.remove('bg-indigo-100');
+          item.classList.add('bg-slate-300');
+        }
+        if (step.low !== undefined && step.high !== undefined) {
+          if (i >= step.low && i <= step.high && step.current !== i && step.found !== i) {
+            item.classList.remove('bg-slate-300');
+            item.classList.add('bg-indigo-100');
+          }
+        }
+      });
+      
+      const info = document.getElementById('search-info');
+      if (step.found !== undefined) {
+        info.innerHTML = `<span class="text-emerald-600 font-bold">✓ Found ${state.searchTarget} at index ${step.found}!</span>`;
+      } else if (step.notFound) {
+        info.innerHTML = `<span class="text-red-600 font-bold">✗ ${state.searchTarget} not found in array</span>`;
+      } else if (step.low !== undefined) {
+        info.innerHTML = `Searching range: [${step.low}, ${step.high}], Mid: ${step.mid}`;
+      } else {
+        info.innerHTML = `Checking index ${step.current}...`;
+      }
+    }
+
+    function applyGraphStepState(step) {
+      if (step.visitNode !== undefined) {
+        const node = document.querySelector(`[data-node="${step.visitNode}"]`);
+        if (node) {
+          node.classList.remove('queued');
+          node.classList.add('visited');
+        }
+      }
+      if (step.currentNode !== undefined) {
+        document.querySelectorAll('.graph-node').forEach(n => n.classList.remove('current'));
+        const node = document.querySelector(`[data-node="${step.currentNode}"]`);
+        if (node) node.classList.add('current');
+      }
+      if (step.queueNode !== undefined) {
+        const node = document.querySelector(`[data-node="${step.queueNode}"]`);
+        if (node && !node.classList.contains('visited')) {
+          node.classList.add('queued');
+        }
+      }
+      if (step.visitEdge) {
+        const edge = document.querySelector(`[data-edge="${step.visitEdge[0]}-${step.visitEdge[1]}"]`);
+        if (edge) edge.classList.add('visited');
+        const reverseEdge = document.querySelector(`[data-edge="${step.visitEdge[1]}-${step.visitEdge[0]}"]`);
+        if (reverseEdge) reverseEdge.classList.add('visited');
+      }
+    }
+
+    function applyDPStepState(step) {
+      if (step.highlightCell) {
+        const [row, col] = step.highlightCell;
+        const cell = document.querySelector(`[data-cell="${row}-${col}"]`);
+        if (cell) {
+          cell.classList.add('bg-amber-200');
+          if (step.value !== undefined) {
+            cell.textContent = step.value;
+          }
+        }
+      }
+      if (step.fillCell) {
+        const [row, col] = step.fillCell;
+        const cell = document.querySelector(`[data-cell="${row}-${col}"]`);
+        if (cell) {
+          cell.classList.remove('bg-amber-200');
+          cell.classList.add('bg-emerald-200');
+          if (step.value !== undefined) {
+            cell.textContent = step.value;
+          }
+        }
+      }
+    }
+
+    function getAnimationDelay() {
+      const speeds = { 1: 2000, 2: 1500, 3: 1000, 4: 750, 5: 500, 6: 350, 7: 250, 8: 150, 9: 100, 10: 50 };
+      return speeds[state.speed] || 500;
+    }
+
+    function updateSpeed(value) {
+      state.speed = parseInt(value);
+      const labels = { 1: '0.25x', 2: '0.33x', 3: '0.5x', 4: '0.66x', 5: '1.0x', 6: '1.5x', 7: '2x', 8: '3x', 9: '5x', 10: '10x' };
+      document.getElementById('speed-label').textContent = labels[value] || '1.0x';
+    }
+
+    function updateStepDisplay() {
+      document.getElementById('step-counter').textContent = state.currentStep;
+    }
+
+    function updateStatusText(text) {
+      const statusEl = document.getElementById('status-text');
+      statusEl.textContent = text;
+      
+      const colors = {
+        'Ready': 'bg-slate-100 text-slate-600',
+        'Running': 'bg-indigo-100 text-indigo-600',
+        'Paused': 'bg-amber-100 text-amber-600',
+        'Complete ✓': 'bg-emerald-100 text-emerald-600',
+        'Stepped': 'bg-purple-100 text-purple-600',
+        'Stepped Back': 'bg-purple-100 text-purple-600'
+      };
+      
+      statusEl.className = `px-3 py-1 rounded-full font-medium ${colors[text] || 'bg-slate-100 text-slate-600'}`;
+    }
+
+    function updateExplanation(text) {
+      document.getElementById('step-explanation').innerHTML = `<p class="text-slate-700 text-sm leading-relaxed">${text}</p>`;
+    }
+
+    function highlightPseudocodeLine(lineIndex) {
+      document.querySelectorAll('.pseudocode-line').forEach((line, i) => {
+        line.classList.remove('active');
+        if (i === lineIndex) line.classList.add('active');
+      });
+    }
+
+    // ==================== SORTING VISUALIZATION ====================
+    function renderArrayVisualization() {
+      document.getElementById('array-viz').classList.remove('hidden');
+      document.getElementById('graph-viz').classList.add('hidden');
+      document.getElementById('search-viz').classList.add('hidden');
+      document.getElementById('dp-viz').classList.add('hidden');
+      
+      const container = document.getElementById('array-viz');
+      const maxVal = Math.max(...state.array);
+      const barWidth = Math.max(20, Math.min(60, (container.offsetWidth - 100) / state.array.length));
+      
+      container.innerHTML = state.array.map((val, i) => `
+        <div class="array-bar flex flex-col items-center">
+          <div class="rounded-t-lg bg-gradient-to-t from-indigo-500 to-purple-500 transition-all duration-300" 
+               style="width: ${barWidth}px; height: ${(val / maxVal) * 200}px;"
+               data-index="${i}"></div>
+          <span class="text-xs font-mono mt-1 text-slate-600">${val}</span>
+        </div>
+      `).join('');
+    }
+
+    function generateSortingSteps() {
+      const arr = state.array.slice();
+      state.steps = [];
+      
+      switch (state.currentAlgorithm) {
+        case 'bubbleSort': generateBubbleSortSteps(arr); break;
+        case 'selectionSort': generateSelectionSortSteps(arr); break;
+        case 'insertionSort': generateInsertionSortSteps(arr); break;
+        case 'quickSort': generateQuickSortSteps(arr, 0, arr.length - 1); break;
+        case 'mergeSort': generateMergeSortSteps(arr, 0, arr.length - 1); break;
+      }
+      
+      state.totalSteps = state.steps.length;
+      state.array = state.steps.length > 0 ? state.steps[0].array.slice() : arr.slice();
+    }
+
+    function generateBubbleSortSteps(arr) {
+      const originalArr = arr.slice();
+      const n = arr.length;
+      const sorted = [];
+      
+      for (let i = 0; i < n - 1; i++) {
+        for (let j = 0; j < n - i - 1; j++) {
+          state.steps.push({
+            array: arr.slice(),
+            comparing: [j, j + 1],
+            sorted: [...sorted],
+            explanation: `Comparing ${arr[j]} and ${arr[j + 1]}`,
+            line: 2
+          });
+          
+          if (arr[j] > arr[j + 1]) {
+            state.steps.push({
+              array: arr.slice(),
+              swap: [j, j + 1],
+              sorted: [...sorted],
+              explanation: `${arr[j]} > ${arr[j + 1]}, swapping them`,
+              line: 3
+            });
+            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+          }
+        }
+        sorted.unshift(n - i - 1);
+      }
+      
+      sorted.unshift(0);
+      state.steps.push({
+        array: arr.slice(),
+        sorted: Array.from({ length: n }, (_, i) => i),
+        explanation: 'Array is now fully sorted!',
+        line: 4
+      });
+      
+      state.array = originalArr;
+    }
+
+    function generateSelectionSortSteps(arr) {
+      const originalArr = arr.slice();
+      const n = arr.length;
+      const sorted = [];
+      
+      for (let i = 0; i < n - 1; i++) {
+        let minIdx = i;
+        state.steps.push({
+          array: arr.slice(),
+          comparing: [i],
+          sorted: [...sorted],
+          explanation: `Starting from index ${i}, looking for minimum element`,
+          line: 1
+        });
+        
+        for (let j = i + 1; j < n; j++) {
+          state.steps.push({
+            array: arr.slice(),
+            comparing: [minIdx, j],
+            sorted: [...sorted],
+            explanation: `Comparing current minimum ${arr[minIdx]} with ${arr[j]}`,
+            line: 3
+          });
+          
+          if (arr[j] < arr[minIdx]) {
+            minIdx = j;
+            state.steps.push({
+              array: arr.slice(),
+              comparing: [minIdx],
+              sorted: [...sorted],
+              explanation: `Found new minimum: ${arr[minIdx]} at index ${minIdx}`,
+              line: 4
+            });
+          }
+        }
+        
+        if (minIdx !== i) {
+          state.steps.push({
+            array: arr.slice(),
+            swap: [i, minIdx],
+            sorted: [...sorted],
+            explanation: `Swapping ${arr[i]} with minimum ${arr[minIdx]}`,
+            line: 5
+          });
+          [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
+        }
+        
+        sorted.push(i);
+      }
+      
+      sorted.push(n - 1);
+      state.steps.push({
+        array: arr.slice(),
+        sorted: Array.from({ length: n }, (_, i) => i),
+        explanation: 'Array is now fully sorted!',
+        line: 6
+      });
+      
+      state.array = originalArr;
+    }
+
+    function generateInsertionSortSteps(arr) {
+      const originalArr = arr.slice();
+      const n = arr.length;
+      
+      for (let i = 1; i < n; i++) {
+        const key = arr[i];
+        let j = i - 1;
+        
+        state.steps.push({
+          array: arr.slice(),
+          comparing: [i],
+          sorted: Array.from({ length: i }, (_, k) => k),
+          explanation: `Taking element ${key} at index ${i} to insert into sorted portion`,
+          line: 1
+        });
+        
+        while (j >= 0 && arr[j] > key) {
+          state.steps.push({
+            array: arr.slice(),
+            comparing: [j, j + 1],
+            sorted: Array.from({ length: i }, (_, k) => k),
+            explanation: `${arr[j]} > ${key}, shifting ${arr[j]} right`,
+            line: 4
+          });
+          
+          arr[j + 1] = arr[j];
+          j--;
+          
+          state.steps.push({
+            array: arr.slice(),
+            comparing: j >= 0 ? [j] : [],
+            sorted: Array.from({ length: i }, (_, k) => k),
+            explanation: j >= 0 ? `Checking ${arr[j]}...` : `Reached beginning of array`,
+            line: 5
+          });
+        }
+        
+        arr[j + 1] = key;
+        state.steps.push({
+          array: arr.slice(),
+          sorted: Array.from({ length: i + 1 }, (_, k) => k),
+          explanation: `Inserted ${key} at index ${j + 1}`,
+          line: 6
+        });
+      }
+      
+      state.steps.push({
+        array: arr.slice(),
+        sorted: Array.from({ length: n }, (_, i) => i),
+        explanation: 'Array is now fully sorted!',
+        line: 7
+      });
+      
+      state.array = originalArr;
+    }
+
+    function generateQuickSortSteps(arr, low, high) {
+      const originalArr = state.steps.length === 0 ? arr.slice() : null;
+      
+      if (low < high) {
+        state.steps.push({
+          array: arr.slice(),
+          comparing: Array.from({ length: high - low + 1 }, (_, i) => low + i),
+          pivot: high,
+          explanation: `Quick sort on range [${low}, ${high}], pivot = ${arr[high]}`,
+          line: 1
+        });
+        
+        const pivotIdx = partitionForSteps(arr, low, high);
+        
+        generateQuickSortSteps(arr, low, pivotIdx - 1);
+        generateQuickSortSteps(arr, pivotIdx + 1, high);
+      }
+      
+      if (originalArr) {
+        state.steps.push({
+          array: arr.slice(),
+          sorted: Array.from({ length: arr.length }, (_, i) => i),
+          explanation: 'Array is now fully sorted!',
+          line: 4
+        });
+        state.array = originalArr;
+      }
+    }
+
+    function partitionForSteps(arr, low, high) {
+      const pivot = arr[high];
+      let i = low - 1;
+      
+      for (let j = low; j < high; j++) {
+        state.steps.push({
+          array: arr.slice(),
+          comparing: [j, high],
+          pivot: high,
+          explanation: `Comparing ${arr[j]} with pivot ${pivot}`,
+          line: 9
+        });
+        
+        if (arr[j] <= pivot) {
+          i++;
+          if (i !== j) {
+            state.steps.push({
+              array: arr.slice(),
+              swap: [i, j],
+              pivot: high,
+              explanation: `${arr[j]} <= ${pivot}, swapping ${arr[i]} and ${arr[j]}`,
+              line: 10
+            });
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+        }
+      }
+      
+      state.steps.push({
+        array: arr.slice(),
+        swap: [i + 1, high],
+        explanation: `Placing pivot ${pivot} at its final position ${i + 1}`,
+        line: 11
+      });
+      [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+      
+      return i + 1;
+    }
+
+    function generateMergeSortSteps(arr, left, right) {
+      const originalArr = state.steps.length === 0 ? arr.slice() : null;
+      
+      if (left < right) {
+        const mid = Math.floor((left + right) / 2);
+        
+        state.steps.push({
+          array: arr.slice(),
+          comparing: Array.from({ length: right - left + 1 }, (_, i) => left + i),
+          explanation: `Dividing array from index ${left} to ${right}, mid = ${mid}`,
+          line: 2
+        });
+        
+        generateMergeSortSteps(arr, left, mid);
+        generateMergeSortSteps(arr, mid + 1, right);
+        
+        mergeForSteps(arr, left, mid, right);
+      }
+      
+      if (originalArr) {
+        state.steps.push({
+          array: arr.slice(),
+          sorted: Array.from({ length: arr.length }, (_, i) => i),
+          explanation: 'Array is now fully sorted!',
+          line: 5
+        });
+        state.array = originalArr;
+      }
+    }
+
+    function mergeForSteps(arr, left, mid, right) {
+      const leftArr = arr.slice(left, mid + 1);
+      const rightArr = arr.slice(mid + 1, right + 1);
+      
+      let i = 0, j = 0, k = left;
+      
+      state.steps.push({
+        array: arr.slice(),
+        comparing: Array.from({ length: right - left + 1 }, (_, i) => left + i),
+        explanation: `Merging [${leftArr}] and [${rightArr}]`,
+        line: 8
+      });
+      
+      while (i < leftArr.length && j < rightArr.length) {
+        state.steps.push({
+          array: arr.slice(),
+          comparing: [left + i, mid + 1 + j],
+          explanation: `Comparing ${leftArr[i]} and ${rightArr[j]}`,
+          line: 10
+        });
+        
+        if (leftArr[i] <= rightArr[j]) {
+          arr[k] = leftArr[i];
+          i++;
+        } else {
+          arr[k] = rightArr[j];
+          j++;
+        }
+        k++;
+        
+        state.steps.push({
+          array: arr.slice(),
+          sorted: Array.from({ length: k - left }, (_, idx) => left + idx),
+          explanation: `Placed ${arr[k - 1]} at index ${k - 1}`,
+          line: 11
+        });
+      }
+      
+      while (i < leftArr.length) {
+        arr[k] = leftArr[i];
+        i++;
+        k++;
+      }
+      
+      while (j < rightArr.length) {
+        arr[k] = rightArr[j];
+        j++;
+        k++;
+      }
+    }
+
+    // ==================== SEARCHING VISUALIZATION ====================
+    function renderSearchVisualization() {
+      document.getElementById('array-viz').classList.add('hidden');
+      document.getElementById('graph-viz').classList.add('hidden');
+      document.getElementById('search-viz').classList.remove('hidden');
+      document.getElementById('dp-viz').classList.add('hidden');
+      
+      const container = document.getElementById('search-array');
+      container.innerHTML = state.array.map((val, i) => `
+        <div class="search-item w-14 h-14 rounded-xl bg-indigo-100 flex flex-col items-center justify-center font-bold text-indigo-800 shadow-sm transition-all duration-300">
+          <span class="text-lg">${val}</span>
+          <span class="text-xs text-indigo-500">[${i}]</span>
+        </div>
+      `).join('');
+      
+      document.getElementById('search-info').innerHTML = `Target: <span class="font-bold text-indigo-600">${state.searchTarget}</span>`;
+    }
+
+    function generateSearchSteps() {
+      state.steps = [];
+      
+      if (state.currentAlgorithm === 'linearSearch') {
+        generateLinearSearchSteps();
+      } else if (state.currentAlgorithm === 'binarySearch') {
+        generateBinarySearchSteps();
+      }
+      
+      state.totalSteps = state.steps.length;
+    }
+
+    function generateLinearSearchSteps() {
+      const arr = state.array;
+      const target = state.searchTarget;
+      
+      for (let i = 0; i < arr.length; i++) {
+        state.steps.push({
+          current: i,
+          comparing: true,
+          explanation: `Checking index ${i}: Is ${arr[i]} equal to ${target}?`,
+          line: 1
+        });
+        
+        if (arr[i] === target) {
+          state.steps.push({
+            current: i,
+            found: i,
+            explanation: `Found! ${arr[i]} equals ${target} at index ${i}`,
+            line: 2
+          });
+          return;
+        }
+      }
+      
+      state.steps.push({
+        notFound: true,
+        explanation: `${target} was not found in the array after checking all elements`,
+        line: 3
+      });
+    }
+
+    function generateBinarySearchSteps() {
+      const arr = state.array;
+      const target = state.searchTarget;
+      let low = 0, high = arr.length - 1;
+      const eliminated = [];
+      
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        
+        state.steps.push({
+          low, high, mid,
+          current: mid,
+          eliminated: [...eliminated],
+          comparing: true,
+          explanation: `Searching [${low}, ${high}]. Mid index = ${mid}, value = ${arr[mid]}`,
+          line: 3
+        });
+        
+        if (arr[mid] === target) {
+          state.steps.push({
+            found: mid,
+            low, high, mid,
+            eliminated: [...eliminated],
+            explanation: `Found! ${arr[mid]} equals ${target} at index ${mid}`,
+            line: 4
+          });
+          return;
+        } else if (arr[mid] < target) {
+          for (let i = low; i <= mid; i++) eliminated.push(i);
+          state.steps.push({
+            low: mid + 1, high, mid,
+            eliminated: [...eliminated],
+            explanation: `${arr[mid]} < ${target}, search right half`,
+            line: 6
+          });
+          low = mid + 1;
+        } else {
+          for (let i = mid; i <= high; i++) eliminated.push(i);
+          state.steps.push({
+            low, high: mid - 1, mid,
+            eliminated: [...eliminated],
+            explanation: `${arr[mid]} > ${target}, search left half`,
+            line: 8
+          });
+          high = mid - 1;
+        }
+      }
+      
+      state.steps.push({
+        notFound: true,
+        eliminated: [...eliminated],
+        explanation: `${target} was not found in the array`,
+        line: 9
+      });
+    }
+
+    // ==================== GRAPH VISUALIZATION ====================
+    function generateRandomGraph(nodeCount) {
+      const nodes = [];
+      const edges = [];
+      const adjacency = {};
+      
+      const centerX = 300, centerY = 150;
+      const radius = 120;
+      
+      for (let i = 0; i < nodeCount; i++) {
+        const angle = (2 * Math.PI * i) / nodeCount - Math.PI / 2;
+        nodes.push({
+          id: i,
+          x: centerX + radius * Math.cos(angle),
+          y: centerY + radius * Math.sin(angle)
+        });
+        adjacency[i] = [];
+      }
+      
+      for (let i = 0; i < nodeCount; i++) {
+        const next = (i + 1) % nodeCount;
+        edges.push({ from: i, to: next, weight: Math.floor(Math.random() * 9) + 1 });
+        adjacency[i].push(next);
+        adjacency[next].push(i);
+      }
+      
+      const extraEdges = Math.floor(nodeCount / 2);
+      for (let i = 0; i < extraEdges; i++) {
+        const from = Math.floor(Math.random() * nodeCount);
+        let to = Math.floor(Math.random() * nodeCount);
+        while (to === from || adjacency[from].includes(to)) {
+          to = Math.floor(Math.random() * nodeCount);
+        }
+        edges.push({ from, to, weight: Math.floor(Math.random() * 9) + 1 });
+        adjacency[from].push(to);
+        adjacency[to].push(from);
+      }
+      
+      return { nodes, edges, adjacency };
+    }
+
+    function renderGraphVisualization() {
+      document.getElementById('array-viz').classList.add('hidden');
+      document.getElementById('graph-viz').classList.remove('hidden');
+      document.getElementById('search-viz').classList.add('hidden');
+      document.getElementById('dp-viz').classList.add('hidden');
+      
+      const svg = document.getElementById('graph-svg');
+      const { nodes, edges } = state.graph;
+      
+      let svgContent = '';
+      
+      edges.forEach(edge => {
+        const from = nodes[edge.from];
+        const to = nodes[edge.to];
+        svgContent += `
+          <line class="graph-edge" data-edge="${edge.from}-${edge.to}"
+            x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}"
+            stroke="#cbd5e1" stroke-width="2"/>
+          <text x="${(from.x + to.x) / 2}" y="${(from.y + to.y) / 2 - 8}"
+            fill="#64748b" font-size="12" text-anchor="middle" class="font-mono">${edge.weight}</text>
+        `;
+      });
+      
+      nodes.forEach(node => {
+        svgContent += `
+          <circle class="graph-node" data-node="${node.id}"
+            cx="${node.x}" cy="${node.y}" r="25"
+            fill="#6366f1" stroke="#4f46e5" stroke-width="3"/>
+          <text x="${node.x}" y="${node.y + 5}"
+            fill="white" font-size="14" font-weight="bold" text-anchor="middle">${node.id}</text>
+        `;
+      });
+      
+      svg.innerHTML = svgContent;
+    }
+
+    function generateGraphSteps(startNode) {
+      state.steps = [];
+      
+      if (state.currentAlgorithm === 'bfs') {
+        generateBFSSteps(startNode);
+      } else if (state.currentAlgorithm === 'dfs') {
+        generateDFSSteps(startNode);
+      } else if (state.currentAlgorithm === 'dijkstra') {
+        generateDijkstraSteps(startNode);
+      }
+      
+      state.totalSteps = state.steps.length;
+    }
+
+    function generateBFSSteps(start) {
+      const { adjacency } = state.graph;
+      const visited = new Set();
+      const queue = [start];
+      
+      state.steps.push({
+        queueNode: start,
+        explanation: `Starting BFS from node ${start}. Adding to queue.`,
+        line: 1
+      });
+      
+      while (queue.length > 0) {
+        const node = queue.shift();
+        
+        if (visited.has(node)) continue;
+        visited.add(node);
+        
+        state.steps.push({
+          currentNode: node,
+          visitNode: node,
+          explanation: `Visiting node ${node}. Exploring neighbors.`,
+          line: 4
+        });
+        
+        for (const neighbor of adjacency[node]) {
+          if (!visited.has(neighbor)) {
+            state.steps.push({
+              visitEdge: [node, neighbor],
+              queueNode: neighbor,
+              explanation: `Found unvisited neighbor ${neighbor}. Adding to queue.`,
+              line: 7
+            });
+            queue.push(neighbor);
+          }
+        }
+      }
+      
+      state.steps.push({
+        explanation: 'BFS traversal complete! All reachable nodes visited.',
+        line: 8
+      });
+    }
+
+    function generateDFSSteps(start) {
+      const { adjacency } = state.graph;
+      const visited = new Set();
+      
+      function dfs(node) {
+        if (visited.has(node)) return;
+        visited.add(node);
+        
+        state.steps.push({
+          currentNode: node,
+          visitNode: node,
+          explanation: `Visiting node ${node} (depth-first)`,
+          line: 2
+        });
+        
+        for (const neighbor of adjacency[node]) {
+          if (!visited.has(neighbor)) {
+            state.steps.push({
+              visitEdge: [node, neighbor],
+              explanation: `Going deeper: exploring neighbor ${neighbor}`,
+              line: 4
+            });
+            dfs(neighbor);
+          }
+        }
+      }
+      
+      state.steps.push({
+        explanation: `Starting DFS from node ${start}`,
+        line: 0
+      });
+      
+      dfs(start);
+      
+      state.steps.push({
+        explanation: 'DFS traversal complete! All reachable nodes visited.',
+        line: 4
+      });
+    }
+
+    function generateDijkstraSteps(start) {
+      const { nodes, edges, adjacency } = state.graph;
+      const dist = {};
+      const visited = new Set();
+      
+      nodes.forEach(n => dist[n.id] = Infinity);
+      dist[start] = 0;
+      
+      state.steps.push({
+        currentNode: start,
+        explanation: `Starting Dijkstra from node ${start}. Distance = 0`,
+        line: 2
+      });
+      
+      const edgeMap = {};
+      edges.forEach(e => {
+        edgeMap[`${e.from}-${e.to}`] = e.weight;
+        edgeMap[`${e.to}-${e.from}`] = e.weight;
+      });
+      
+      while (visited.size < nodes.length) {
+        let minNode = -1, minDist = Infinity;
+        for (const n of nodes) {
+          if (!visited.has(n.id) && dist[n.id] < minDist) {
+            minDist = dist[n.id];
+            minNode = n.id;
+          }
+        }
+        
+        if (minNode === -1) break;
+        
+        visited.add(minNode);
+        
+        state.steps.push({
+          currentNode: minNode,
+          visitNode: minNode,
+          explanation: `Processing node ${minNode} with distance ${dist[minNode]}`,
+          line: 6
+        });
+        
+        for (const neighbor of adjacency[minNode]) {
+          const weight = edgeMap[`${minNode}-${neighbor}`];
+          const newDist = dist[minNode] + weight;
+          
+          if (newDist < dist[neighbor]) {
+            state.steps.push({
+              visitEdge: [minNode, neighbor],
+              explanation: `Relaxing edge to ${neighbor}: ${dist[minNode]} + ${weight} = ${newDist} < ${dist[neighbor] === Infinity ? '∞' : dist[neighbor]}`,
+              line: 9
+            });
+            dist[neighbor] = newDist;
+          }
+        }
+      }
+      
+      state.steps.push({
+        explanation: 'Dijkstra complete! Shortest paths found.',
+        line: 10
+      });
+    }
+
+    // ==================== DP VISUALIZATION ====================
+    function renderDPVisualization() {
+      document.getElementById('array-viz').classList.add('hidden');
+      document.getElementById('graph-viz').classList.add('hidden');
+      document.getElementById('search-viz').classList.add('hidden');
+      document.getElementById('dp-viz').classList.remove('hidden');
+      
+      const container = document.getElementById('dp-table');
+      
+      if (state.currentAlgorithm === 'fibonacci') {
+        const n = parseInt(document.getElementById('input-n')?.value) || 10;
+        container.innerHTML = `
+          <div class="text-sm text-slate-500 mb-2">Fibonacci DP Table</div>
+          <div class="flex gap-1">
+            ${Array.from({ length: n + 1 }, (_, i) => `
+              <div class="flex flex-col items-center">
+                <div class="text-xs text-slate-400 mb-1">F(${i})</div>
+                <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center font-mono text-sm transition-all duration-300" data-cell="0-${i}">
+                  ${i <= 1 ? i : '?'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        const weights = document.getElementById('input-weights')?.value.split(',').map(x => parseInt(x.trim())) || [2, 3, 4, 5];
+        const values = document.getElementById('input-values')?.value.split(',').map(x => parseInt(x.trim())) || [3, 4, 5, 6];
+        const capacity = parseInt(document.getElementById('input-capacity')?.value) || 8;
+        
+        let tableHTML = `
+          <div class="text-sm text-slate-500 mb-2">Knapsack DP Table (Rows: Items, Cols: Capacity)</div>
+          <table class="border-collapse">
+            <tr>
+              <th class="w-16 h-8 bg-slate-200 text-xs font-mono"></th>
+              ${Array.from({ length: capacity + 1 }, (_, w) => `
+                <th class="w-10 h-8 bg-slate-200 text-xs font-mono">${w}</th>
+              `).join('')}
+            </tr>
+        `;
+        
+        for (let i = 0; i <= weights.length; i++) {
+          tableHTML += `<tr>
+            <td class="w-16 h-10 bg-slate-100 text-xs font-mono text-center">
+              ${i === 0 ? '∅' : `w=${weights[i-1]},v=${values[i-1]}`}
+            </td>
+            ${Array.from({ length: capacity + 1 }, (_, w) => `
+              <td class="w-10 h-10 bg-slate-50 text-center font-mono text-sm transition-all duration-300" data-cell="${i}-${w}">
+                ${i === 0 || w === 0 ? '0' : '?'}
+              </td>
+            `).join('')}
+          </tr>`;
+        }
+        
+        tableHTML += '</table>';
+        container.innerHTML = tableHTML;
+      }
+    }
+
+    function generateFibonacciSteps(n) {
+      state.steps = [];
+      const dp = [0, 1];
+      
+      state.steps.push({
+        highlightCell: [0, 0],
+        value: 0,
+        explanation: 'Base case: F(0) = 0',
+        line: 1
+      });
+      
+      state.steps.push({
+        fillCell: [0, 0],
+        highlightCell: [0, 1],
+        value: 1,
+        explanation: 'Base case: F(1) = 1',
+        line: 1
+      });
+      
+      state.steps.push({
+        fillCell: [0, 1],
+        explanation: 'Base cases filled, now computing...',
+        line: 2
+      });
+      
+      for (let i = 2; i <= n; i++) {
+        dp[i] = dp[i - 1] + dp[i - 2];
+        
+        state.steps.push({
+          highlightCell: [0, i],
+          value: '?',
+          explanation: `Computing F(${i}) = F(${i-1}) + F(${i-2}) = ${dp[i-1]} + ${dp[i-2]}`,
+          line: 3
+        });
+        
+        state.steps.push({
+          fillCell: [0, i],
+          value: dp[i],
+          explanation: `F(${i}) = ${dp[i]}`,
+          line: 3
+        });
+      }
+      
+      state.steps.push({
+        explanation: `Complete! F(${n}) = ${dp[n]}`,
+        line: 4
+      });
+      
+      state.totalSteps = state.steps.length;
+    }
+
+    function generateKnapsackSteps(weights, values, capacity) {
+      state.steps = [];
+      const n = weights.length;
+      const dp = Array(n + 1).fill(null).map(() => Array(capacity + 1).fill(0));
+      
+      state.steps.push({
+        explanation: 'Initializing DP table. Row 0 and Column 0 are all zeros.',
+        line: 1
+      });
+      
+      for (let i = 1; i <= n; i++) {
+        for (let w = 1; w <= capacity; w++) {
+          state.steps.push({
+            highlightCell: [i, w],
+            explanation: `Considering item ${i} (w=${weights[i-1]}, v=${values[i-1]}) for capacity ${w}`,
+            line: 4
+          });
+          
+          if (weights[i - 1] <= w) {
+            const include = values[i - 1] + dp[i - 1][w - weights[i - 1]];
+            const exclude = dp[i - 1][w];
+            dp[i][w] = Math.max(include, exclude);
+            
+            state.steps.push({
+              fillCell: [i, w],
+              value: dp[i][w],
+              explanation: `Item fits! max(include: ${include}, exclude: ${exclude}) = ${dp[i][w]}`,
+              line: 6
+            });
+          } else {
+            dp[i][w] = dp[i - 1][w];
+            state.steps.push({
+              fillCell: [i, w],
+              value: dp[i][w],
+              explanation: `Item too heavy (${weights[i-1]} > ${w}), skip. Value = ${dp[i][w]}`,
+              line: 9
+            });
+          }
+        }
+      }
+      
+      state.steps.push({
+        explanation: `Complete! Maximum value = ${dp[n][capacity]}`,
+        line: 10
+      });
+      
+      state.totalSteps = state.steps.length;
+    }
+
+    // ==================== THEME ====================
+    function toggleTheme() {
+      isDarkTheme = !isDarkTheme;
+      document.body.classList.toggle('dark', isDarkTheme);
+      document.getElementById('theme-icon').textContent = isDarkTheme ? '🌙' : '☀️';
+      document.getElementById('theme-toggle').classList.toggle('bg-slate-700', isDarkTheme);
+      document.getElementById('theme-toggle').classList.toggle('bg-slate-200', !isDarkTheme);
+    }
+
+    // ==================== ELEMENT SDK ====================
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (config) => {
+        document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+        document.getElementById('welcome-msg').textContent = config.welcome_message || defaultConfig.welcome_message;
+      },
+      mapToCapabilities: (config) => ({
+        recolorables: [
+          {
+            get: () => config.background_color || defaultConfig.background_color,
+            set: (value) => window.elementSdk.setConfig({ background_color: value })
+          },
+          {
+            get: () => config.surface_color || defaultConfig.surface_color,
+            set: (value) => window.elementSdk.setConfig({ surface_color: value })
+          },
+          {
+            get: () => config.text_color || defaultConfig.text_color,
+            set: (value) => window.elementSdk.setConfig({ text_color: value })
+          },
+          {
+            get: () => config.primary_action_color || defaultConfig.primary_action_color,
+            set: (value) => window.elementSdk.setConfig({ primary_action_color: value })
+          },
+          {
+            get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+            set: (value) => window.elementSdk.setConfig({ secondary_action_color: value })
+          }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      }),
+      mapToEditPanelValues: (config) => new Map([
+        ['app_title', config.app_title || defaultConfig.app_title],
+        ['welcome_message', config.welcome_message || defaultConfig.welcome_message]
+      ])
+    });
+
+    // Initialize on load
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c984836551f17ae',t:'MTc3MDM1NjEwNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
